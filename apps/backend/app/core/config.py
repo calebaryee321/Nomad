@@ -10,6 +10,12 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://nomad:nomad@localhost:5432/nomad",
         alias="NOMAD_DATABASE_URL",
     )
+    jwt_secret: str = Field(
+        default="change-me-in-production-this-is-not-secure",
+        alias="NOMAD_JWT_SECRET",
+    )
+    jwt_algorithm: str = Field(default="HS256", alias="NOMAD_JWT_ALGORITHM")
+    jwt_expire_minutes: int = Field(default=60 * 24 * 30, alias="NOMAD_JWT_EXPIRE_MINUTES")
 
     model_config = SettingsConfigDict(populate_by_name=True)
 

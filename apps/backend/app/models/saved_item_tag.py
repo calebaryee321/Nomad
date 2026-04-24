@@ -1,7 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,10 +10,10 @@ class SavedItemTag(Base):
     __tablename__ = "saved_item_tags"
 
     saved_item_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("saved_items.id", ondelete="CASCADE"), primary_key=True
+        Uuid(as_uuid=True), ForeignKey("saved_items.id", ondelete="CASCADE"), primary_key=True
     )
     tag_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
+        Uuid(as_uuid=True), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
     )
 
     saved_item = relationship("SavedItem", back_populates="tags")
