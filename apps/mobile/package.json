@@ -2,8 +2,26 @@
   "name": "@nomad/mobile",
   "private": true,
   "version": "0.1.0",
+  "description": "Nomad Android-first React Native app: receive shared Instagram URLs and organize them.",
   "scripts": {
-    "lint": "echo 'Mobile scaffold pending'",
-    "test": "echo 'Mobile tests pending'"
+    "android": "react-native run-android",
+    "start": "react-native start",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+    "test": "jest --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "18.2.0",
+    "react-native": "0.74.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.2.79",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.4.5"
   }
 }

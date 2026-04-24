@@ -11,10 +11,9 @@ import jwt
 
 from app.core.config import settings
 
-# bcrypt has a 72-byte input limit; we pre-hash longer inputs deterministically
-# is not used here. Instead we simply truncate per bcrypt's documented behavior
-# by relying on bcrypt itself to enforce the limit (raises on >72 bytes since 4.x).
-# To stay portable we truncate manually so longer passwords still work.
+# bcrypt only hashes the first 72 bytes of input, and bcrypt 4.x raises
+# ValueError on longer inputs. Truncate manually so longer passphrases
+# still authenticate consistently.
 _BCRYPT_MAX_BYTES = 72
 
 

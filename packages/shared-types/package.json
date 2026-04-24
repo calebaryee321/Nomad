@@ -1,0 +1,11 @@
+{
+  "name": "@nomad/shared-types",
+  "private": true,
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "echo 'shared-types: no lint'",
+    "test": "echo 'shared-types: no tests'"
+  }
+}

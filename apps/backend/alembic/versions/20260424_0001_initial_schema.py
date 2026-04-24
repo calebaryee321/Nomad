@@ -8,7 +8,6 @@ Create Date: 2026-04-24 00:00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -22,7 +21,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("email", sa.String(length=255), nullable=True, unique=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column(
@@ -32,17 +31,17 @@ def upgrade() -> None:
 
     op.create_table(
         "tags",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("name", sa.String(length=100), nullable=False, unique=True),
     )
     op.create_index("ix_tags_name", "tags", ["name"], unique=True)
 
     op.create_table(
         "collections",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, nullable=False),
         sa.Column(
             "user_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -62,7 +61,7 @@ def upgrade() -> None:
         "user_settings",
         sa.Column(
             "user_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             primary_key=True,
             nullable=False,
@@ -91,10 +90,10 @@ def upgrade() -> None:
 
     op.create_table(
         "saved_items",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, nullable=False),
         sa.Column(
             "user_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -111,7 +110,7 @@ def upgrade() -> None:
         sa.Column("user_note", sa.Text(), nullable=True),
         sa.Column(
             "collection_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("collections.id", ondelete="SET NULL"),
             nullable=True,
         ),
@@ -142,14 +141,14 @@ def upgrade() -> None:
         "saved_item_tags",
         sa.Column(
             "saved_item_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("saved_items.id", ondelete="CASCADE"),
             primary_key=True,
             nullable=False,
         ),
         sa.Column(
             "tag_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("tags.id", ondelete="CASCADE"),
             primary_key=True,
             nullable=False,
@@ -158,10 +157,10 @@ def upgrade() -> None:
 
     op.create_table(
         "processing_logs",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("id", sa.Uuid(as_uuid=True), primary_key=True, nullable=False),
         sa.Column(
             "saved_item_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(as_uuid=True),
             sa.ForeignKey("saved_items.id", ondelete="CASCADE"),
             nullable=False,
         ),
