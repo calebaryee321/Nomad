@@ -13,7 +13,7 @@ Nomad is an Android-first Instagram saver and organizer with optional AI categor
 ## Quickstart (backend)
 
 ```bash
-cd /home/runner/work/Nomad/Nomad/apps/backend
+cd apps/backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
