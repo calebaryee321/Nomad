@@ -1,0 +1,13 @@
+{
+  "name": "nomad",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "npm run -ws lint --if-present",
+    "test": "npm run -ws test --if-present"
+  }
+}

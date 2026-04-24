@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build / misc
+.DS_Store
+*.log
+.env
+apps/backend/alembic/*.pyc
+
+# React Native
+android/.gradle/
+android/app/build/
+ios/build/
