@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, Uuid, func
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,6 +11,18 @@ from app.models.enums import ProcessingStatus, SavedItemType, SourcePlatform
 
 class SavedItem(Base):
     __tablename__ = "saved_items"
+    __table_args__ = (
+        # Per-user dedupe: a given normalized URL may exist at most once for a
+        # user among non-deleted rows. Race-condition safe at the DB level.
+        Index(
+            "uq_saved_items_user_normurl_active",
+            "user_id",
+            "normalized_url",
+            unique=True,
+            sqlite_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(

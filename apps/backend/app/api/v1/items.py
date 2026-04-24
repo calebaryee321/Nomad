@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user, get_db
@@ -150,7 +151,30 @@ def create_item(
         processing_status=ProcessingStatus.PENDING.value,
     )
     db.add(item)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError:
+        # Another request created the same (user_id, normalized_url) row
+        # between our SELECT above and this INSERT. Roll back and return the
+        # row that won the race so the share-intent flow stays idempotent.
+        db.rollback()
+        winner = db.scalar(
+            select(SavedItem)
+            .options(selectinload(SavedItem.tags).selectinload(SavedItemTag.tag))
+            .where(
+                SavedItem.user_id == current_user.id,
+                SavedItem.normalized_url == normalized.normalized_url,
+                SavedItem.deleted_at.is_(None),
+            )
+        )
+        if winner is None:
+            # Extremely unlikely: index conflict but no row is visible. Surface
+            # a 409 rather than a confusing 500.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Could not save link due to a concurrent update; please retry",
+            ) from None
+        return _to_out(winner)
 
     for tag in _resolve_tags(db, payload.tags):
         db.add(SavedItemTag(saved_item_id=item.id, tag_id=tag.id))

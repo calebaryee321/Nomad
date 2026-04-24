@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { AppState, StatusBar, StyleSheet, View } from 'react-native';
 
 import { ApiClient } from '@app/api/client';
@@ -7,7 +7,7 @@ import { AddItemScreen } from '@app/screens/AddItemScreen';
 import { HomeScreen } from '@app/screens/HomeScreen';
 import { LoginScreen } from '@app/screens/LoginScreen';
 import { RegisterScreen } from '@app/screens/RegisterScreen';
-import { consumeSharedText } from '@app/shareIntent/nativeBridge';
+import { consumeSharedText, subscribeToShares } from '@app/shareIntent/nativeBridge';
 import { MemoryTokenStore } from '@app/state/tokenStore';
 import { colors } from '@app/theme';
 
@@ -18,25 +18,58 @@ const api = new ApiClient({ baseUrl: API_BASE_URL, tokens });
 
 export default function App(): React.ReactElement {
   const [nav, dispatch] = useReducer(navReducer, initialNav);
+  // URL captured from a share intent that we couldn't act on yet (e.g. user
+  // shared to Nomad while logged out). Replayed once authentication completes
+  // so the user's intent is never silently dropped.
+  const [pendingSharedUrl, setPendingSharedUrl] = useState<string | null>(null);
+  const pendingSharedUrlRef = useRef<string | null>(null);
+  pendingSharedUrlRef.current = pendingSharedUrl;
 
-  const checkSharedIntent = useCallback(async () => {
+  const handleSharedText = useCallback(async (text: string) => {
+    const token = await tokens.get();
+    if (token) {
+      // Logged in → straight to AddItem with the URL pre-filled.
+      setPendingSharedUrl(null);
+      dispatch({ type: 'push', to: { name: 'addItem', sharedUrl: text } });
+    } else {
+      // Not logged in → remember the URL and surface the login screen. The
+      // URL is replayed in `handleAuthenticated`.
+      setPendingSharedUrl(text);
+      dispatch({ type: 'reset', to: { name: 'login' } });
+    }
+  }, []);
+
+  const checkBufferedShare = useCallback(async () => {
     const text = await consumeSharedText();
-    if (text) {
-      const token = await tokens.get();
-      dispatch({
-        type: token ? 'push' : 'reset',
-        to: token ? { name: 'addItem', sharedUrl: text } : { name: 'login' },
-      });
+    if (text) await handleSharedText(text);
+  }, [handleSharedText]);
+
+  const handleAuthenticated = useCallback(() => {
+    const pending = pendingSharedUrlRef.current;
+    if (pending) {
+      setPendingSharedUrl(null);
+      dispatch({ type: 'reset', to: { name: 'home' } });
+      dispatch({ type: 'push', to: { name: 'addItem', sharedUrl: pending } });
+    } else {
+      dispatch({ type: 'reset', to: { name: 'home' } });
     }
   }, []);
 
   useEffect(() => {
-    void checkSharedIntent();
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void checkSharedIntent();
+    void checkBufferedShare();
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void checkBufferedShare();
     });
-    return () => sub.remove();
-  }, [checkSharedIntent]);
+    // Live push for shares that arrive while the React context is alive
+    // (e.g. user already foreground in split-screen with Instagram).
+    const shareSub = subscribeToShares((text) => {
+      void handleSharedText(text);
+    });
+    return () => {
+      appStateSub.remove();
+      shareSub.remove();
+    };
+  }, [checkBufferedShare, handleSharedText]);
 
   const screen = currentScreen(nav);
 
@@ -46,7 +79,7 @@ export default function App(): React.ReactElement {
       view = (
         <LoginScreen
           api={api}
-          onAuthenticated={() => dispatch({ type: 'reset', to: { name: 'home' } })}
+          onAuthenticated={handleAuthenticated}
           onSwitchToRegister={() => dispatch({ type: 'push', to: { name: 'register' } })}
         />
       );
@@ -55,7 +88,7 @@ export default function App(): React.ReactElement {
       view = (
         <RegisterScreen
           api={api}
-          onAuthenticated={() => dispatch({ type: 'reset', to: { name: 'home' } })}
+          onAuthenticated={handleAuthenticated}
           onBack={() => dispatch({ type: 'pop' })}
         />
       );

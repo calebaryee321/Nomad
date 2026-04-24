@@ -56,11 +56,23 @@ Point the app at your backend by setting `NOMAD_API_BASE_URL` in `.env` or in
 
 1. User opens an Instagram post/reel and taps **Share → Nomad**.
 2. Android delivers `Intent.ACTION_SEND` with `text/plain` to `MainActivity`.
-3. `MainActivity.handleShareIntent` extracts `EXTRA_TEXT` and stores it in
-   `ShareReceiverModule.pendingSharedText`.
-4. JS calls `consumeSharedText()` on launch and on every `AppState → active`.
-5. If a URL is pending, the app navigates to **AddItem** with the URL
-   pre-filled, the user adds optional notes/tags, and the URL is `POST`ed to
-   `/api/v1/items`.
-6. The backend stores only the URL, the normalized form, and user metadata —
-   no Instagram media is downloaded.
+3. `MainActivity.handleShareIntent` extracts `EXTRA_TEXT` and calls
+   `ShareReceiverModule.deliverSharedText(...)`, which:
+   - **Buffers** the URL in a static field so it survives until JS is ready
+     (cold-start case), AND
+   - **Emits** an `onSharedText` device event when the React context is
+     already alive (so foreground shares appear instantly).
+   It then clears the intent extras so a configuration change (rotation)
+   won't re-fire the same share.
+4. JS in `App.tsx`:
+   - On launch / `AppState → active`: calls `consumeSharedText()` to drain
+     the native buffer.
+   - Continuously: subscribes via `subscribeToShares(callback)` for live
+     pushes.
+5. If the user is logged in, the app navigates to **AddItem** with the URL
+   pre-filled. If they are logged out, the URL is held in `pendingSharedUrl`
+   state, the login screen is shown, and the URL is replayed to AddItem the
+   moment auth completes — so a shared link is **never silently dropped**.
+6. The user adds optional notes/tags and taps **Save**; the app `POST`s to
+   `/api/v1/items`. The backend stores only the URL, the normalized form,
+   and user metadata — no Instagram media is downloaded.

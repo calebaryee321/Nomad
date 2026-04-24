@@ -141,3 +141,37 @@ def test_cannot_assign_other_users_collection(
 def test_items_require_auth(client: TestClient) -> None:
     assert client.get("/api/v1/items").status_code == 401
     assert client.post("/api/v1/items", json={"url": "https://x.test/"}).status_code == 401
+
+
+def test_cannot_access_other_users_items(client: TestClient, auth_headers: dict[str, str]) -> None:
+    # Alice owns the item.
+    item = client.post(
+        "/api/v1/items", headers=auth_headers, json={"url": "https://x.test/secret"}
+    ).json()
+
+    # Mallory is a separate user.
+    other = client.post(
+        "/api/v1/auth/register",
+        json={"email": "mallory2@example.com", "password": "anotherpass1"},
+    ).json()
+    other_headers = {"Authorization": f"Bearer {other['access_token']}"}
+
+    # Mallory cannot view, modify, or delete Alice's item.
+    assert client.get(f"/api/v1/items/{item['id']}", headers=other_headers).status_code == 404
+    assert (
+        client.patch(
+            f"/api/v1/items/{item['id']}",
+            headers=other_headers,
+            json={"user_note": "hijack"},
+        ).status_code
+        == 404
+    )
+    assert client.delete(f"/api/v1/items/{item['id']}", headers=other_headers).status_code == 404
+
+    # Alice's item is untouched.
+    alice_view = client.get(f"/api/v1/items/{item['id']}", headers=auth_headers).json()
+    assert alice_view["user_note"] is None
+
+    # Mallory's listing doesn't include Alice's item.
+    mallory_list = client.get("/api/v1/items", headers=other_headers).json()
+    assert mallory_list == []
