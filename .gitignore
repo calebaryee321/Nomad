@@ -19,3 +19,5 @@ apps/backend/alembic/*.pyc
 android/.gradle/
 android/app/build/
 ios/build/
+
+*.egg-info/
