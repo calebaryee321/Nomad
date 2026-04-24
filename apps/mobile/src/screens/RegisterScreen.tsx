@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import type { ApiClient } from '@app/api/client';
-import { colors, spacing } from '@app/theme';
+import { colors, radius, spacing, typography } from '@app/theme';
 
 interface Props {
   api: ApiClient;
@@ -35,63 +45,119 @@ export function RegisterScreen({ api, onAuthenticated, onBack }: Props): React.R
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create your Nomad account</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Display name (optional)"
-        placeholderTextColor={colors.textMuted}
-        value={displayName}
-        onChangeText={setDisplayName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password (min 8 chars)"
-        placeholderTextColor={colors.textMuted}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity style={styles.primaryBtn} onPress={submit} disabled={loading}>
-        {loading ? <ActivityIndicator color={colors.primaryText} /> : <Text style={styles.primaryBtnText}>Create account</Text>}
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onBack}>
-        <Text style={styles.link}>Already have an account? Log in</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>Nomad</Text>
+          <Text style={styles.headline}>Start your{'\n'}travel journal.</Text>
+          <Text style={styles.tagline}>One tap from Instagram and your inspiration lives here.</Text>
+        </View>
+
+        <View>
+          <Text style={styles.fieldLabel}>Display name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Optional"
+            placeholderTextColor={colors.textMuted}
+            value={displayName}
+            onChangeText={setDisplayName}
+          />
+
+          <Text style={styles.fieldLabel}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <Text style={styles.fieldLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="At least 8 characters"
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, loading ? styles.primaryBtnDisabled : null]}
+            onPress={submit}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.primaryText} />
+            ) : (
+              <Text style={styles.primaryBtnText}>Create account</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onBack} style={styles.switchBtn}>
+            <Text style={styles.switchText}>
+              Already have an account? <Text style={styles.switchLink}>Log in</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background, justifyContent: 'center' },
-  title: { color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: spacing.lg },
-  input: {
-    backgroundColor: colors.surface,
-    color: colors.text,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: spacing.md,
+  root: { flex: 1, backgroundColor: colors.background },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl * 2,
+    paddingBottom: spacing.xxl,
+    justifyContent: 'space-between',
+  },
+  header: { marginBottom: spacing.xxl },
+  eyebrow: {
+    ...typography.caption,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: spacing.md,
+  },
+  headline: { ...typography.display, fontSize: 40, lineHeight: 46, marginBottom: spacing.lg },
+  tagline: { ...typography.body, color: colors.textMuted },
+  fieldLabel: {
+    ...typography.caption,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.surfaceMuted,
+    color: colors.text,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    fontSize: typography.body.fontSize,
   },
   primaryBtn: {
     backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
     marginTop: spacing.md,
   },
-  primaryBtnText: { color: colors.primaryText, fontWeight: '600' },
-  link: { color: colors.primary, marginTop: spacing.md, textAlign: 'center' },
+  primaryBtnDisabled: { opacity: 0.7 },
+  primaryBtnText: { color: colors.primaryText, fontWeight: '700', fontSize: 16, letterSpacing: 0.3 },
+  switchBtn: { paddingVertical: spacing.lg, alignItems: 'center' },
+  switchText: { ...typography.body, color: colors.textMuted },
+  switchLink: { color: colors.primary, fontWeight: '600' },
   error: { color: colors.danger, marginBottom: spacing.sm },
 });

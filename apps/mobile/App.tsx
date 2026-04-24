@@ -132,7 +132,7 @@ export default function App(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       {view}
     </View>
   );
